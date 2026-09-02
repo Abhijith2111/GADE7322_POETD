@@ -1,7 +1,3 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-// CentralTowerBase.cpp
-
 #include "CentralTowerBase.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -12,9 +8,6 @@ ACentralTowerBase::ACentralTowerBase()
 	TowerMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("TowerMesh"));
 	RootComponent = TowerMesh;
 
-	// Placeholder engine cube so the actor is visible in isolation without
-	// requiring any custom content. Swap this for a real mesh in the
-	// Blueprint child (BP_CentralTowerBase) or via the Details panel.
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeMeshAsset(TEXT("/Engine/BasicShapes/Cube.Cube"));
 	if (CubeMeshAsset.Succeeded())
 	{
@@ -61,6 +54,3 @@ float ACentralTowerBase::GetHealthPercent() const
 {
 	return MaxHealth > 0.f ? (CurrentHealth / MaxHealth) : 0.f;
 }
-
-
-

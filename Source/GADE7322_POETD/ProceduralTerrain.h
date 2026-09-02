@@ -1,18 +1,13 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
-// ProceduralTerrain.h
-// Phase 1 - Isolated procedural grid terrain + pathway generator.
-// No references to player controllers, inventory, currency, HUD, or enemy AI.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "ProceduralMeshComponent.h"
+#include "Materials/MaterialInterface.h"
+#include "Components/InstancedStaticMeshComponent.h"
 #include "CentralTowerBase.h"
 #include "ProceduralTerrain.generated.h"
 
-/** A single generated pathway: its grid nodes (world space) and a debug color for visualization. */
 USTRUCT(BlueprintType)
 struct FProceduralPathway
 {
@@ -22,15 +17,12 @@ struct FProceduralPathway
 	TArray<FVector> Nodes;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Pathway")
+	TArray<FIntPoint> Cells;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Pathway")
 	FColor DebugColor = FColor::Red;
 };
 
-/**
- * Builds a dynamic grid mesh at runtime, generates 3+ pathways from map edges
- * to a central point, and separates the grid into pathway cells vs. valid
- * build cells. Fully testable standalone via debug draw - no gameplay
- * systems required.
- */
 UCLASS()
 class GADE7322_POETD_API AProceduralTerrain : public AActor
 {
@@ -48,11 +40,9 @@ protected:
 #endif
 
 public:
-	// ---------- Components ----------
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UProceduralMeshComponent* ProceduralMesh;
 
-	// ---------- Grid Configuration ----------
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|Grid", meta = (ClampMin = "4"))
 	int32 GridWidth = 20;
 
@@ -60,23 +50,29 @@ public:
 	int32 GridHeight = 20;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|Grid", meta = (ClampMin = "10.0"))
-	float CellSize = 200.f;
+	FVector2D TileDimensions = FVector2D(200.f, 200.f);
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|Grid")
+	bool bAutoDetectTileDimensions = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|Grid", meta = (ClampMin = "0.0"))
+	float TileSpacing = 0.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|Grid")
 	int32 Seed = 12345;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|Grid")
+	bool bRandomizeSeedOnPlay = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|Grid")
 	UMaterialInterface* TerrainMaterial;
 
-	// ---------- Pathway Configuration ----------
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|Pathways", meta = (ClampMin = "3"))
 	int32 NumPathways = 3;
 
-	/** How many cells of buffer to keep clear around each pathway when generating build locations. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|Pathways", meta = (ClampMin = "0"))
 	int32 PathBufferCells = 1;
 
-	// ---------- Central Tower ----------
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|Tower")
 	TSubclassOf<ACentralTowerBase> CentralTowerClass;
 
@@ -86,7 +82,75 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Terrain|Tower")
 	ACentralTowerBase* SpawnedCentralTower;
 
-	// ---------- Debug Visualization ----------
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UInstancedStaticMeshComponent* StraightTileISM;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UInstancedStaticMeshComponent* TurnLeftTileISM;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UInstancedStaticMeshComponent* TurnRightTileISM;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UInstancedStaticMeshComponent* TJunctionTileISM;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UInstancedStaticMeshComponent* GroundTileISM_A;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UInstancedStaticMeshComponent* GroundTileISM_B;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UInstancedStaticMeshComponent* GroundTileISM_C;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UInstancedStaticMeshComponent* GroundTileISM_D;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|PathTiles")
+	bool bSpawnPathTiles = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|PathTiles")
+	UStaticMesh* StraightPathMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|PathTiles")
+	UStaticMesh* TurnLeftPathMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|PathTiles")
+	UStaticMesh* TurnRightPathMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|PathTiles")
+	UStaticMesh* TJunctionPathMesh;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|PathTiles", meta = (ClampMin = "-360.0", ClampMax = "360.0"))
+	float PathTileYawOffset = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|PathTiles")
+	float PathTileZOffset = 2.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|GroundTiles")
+	bool bSpawnGroundTiles = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|GroundTiles")
+	UStaticMesh* GroundTileMeshA;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|GroundTiles")
+	UStaticMesh* GroundTileMeshB;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|GroundTiles")
+	UStaticMesh* GroundTileMeshC;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|GroundTiles")
+	UStaticMesh* GroundTileMeshD;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|GroundTiles")
+	bool bRandomizeGroundTileRotation = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|GroundTiles")
+	float GroundTileZOffset = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|GroundTiles")
+	bool bHideGroundMeshVisualWhenTilesActive = true;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|Debug")
 	bool bDrawDebug = true;
 
@@ -96,20 +160,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain|Debug")
 	FColor BuildLocationDebugColor = FColor::Green;
 
-	// ---------- Output Data (required by spec) ----------
 	UPROPERTY(BlueprintReadOnly, Category = "Terrain|Output")
 	TArray<FVector> PathwayNodes;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Terrain|Output")
 	TArray<FVector> BuildGridLocations;
 
-	/** Same data as PathwayNodes, but organized per-path with its own debug color. Useful for Phase 2 enemy routing. */
+	UPROPERTY(BlueprintReadOnly, Category = "Terrain|Output")
+	TArray<FIntPoint> BuildGridCells;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Terrain|Output")
 	TArray<FProceduralPathway> Pathways;
 
-	// ---------- Public Functions ----------
-
-	/** Regenerates mesh, pathways, and build locations from current parameters. Callable from the Details panel. */
 	UFUNCTION(CallInEditor, BlueprintCallable, Category = "Terrain")
 	void GenerateTerrain();
 
@@ -119,6 +181,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Terrain")
 	FVector GridToWorldLocation(int32 GridX, int32 GridY) const;
 
+	UFUNCTION(BlueprintPure, Category = "Terrain")
+	FVector GetStepVector(const FIntPoint& Direction) const;
+
 private:
 	FRandomStream RandomStream;
 	TSet<FIntPoint> PathCellSet;
@@ -127,7 +192,15 @@ private:
 	void GeneratePathways();
 	void GenerateBuildLocations();
 	void DrawDebugVisualization();
+	void DetectTileDimensionsFromMesh();
 
 	bool IsNearPathCell(const FIntPoint& Cell) const;
 	FIntPoint GetRandomEdgeCell(int32 EdgeIndex) const;
+
+	TSet<FIntPoint> PlacedTileCells;
+
+	void SpawnPathTiles();
+	void SpawnGroundTiles();
+	void SpawnTileInstance(UInstancedStaticMeshComponent* ISM, const FIntPoint& Cell, float Yaw, float ZOffset);
+	float YawForDirection(const FIntPoint& Dir) const;
 };
