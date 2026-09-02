@@ -48,8 +48,13 @@ void AProceduralTerrain::BeginPlay()
 void AProceduralTerrain::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-	// Live-preview in the editor whenever a parameter changes (grid size, seed, etc.)
-	RerunConstructionScripts();
+
+	// Never rerun construction scripts on the CDO (e.g. when editing a
+	// Blueprint's Class Defaults panel) — only on placed level instances.
+	if (!HasAnyFlags(RF_ClassDefaultObject))
+	{
+		RerunConstructionScripts();
+	}
 }
 #endif
 
@@ -96,7 +101,7 @@ void AProceduralTerrain::GenerateGridMesh()
 	TArray<FVector> Normals;
 	TArray<FVector2D> UVs;
 	TArray<FProcMeshTangent> Tangents;
-	TArray<FLinearColor> VertexColors;
+	TArray<FColor> VertexColors;
 
 	const int32 VertsX = GridWidth + 1;
 	const int32 VertsY = GridHeight + 1;
