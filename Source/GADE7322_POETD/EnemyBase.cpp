@@ -10,11 +10,17 @@ AEnemyBase::AEnemyBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
 
+	AutoPossessAI = EAutoPossessAI::Disabled;
+	AIControllerClass = nullptr;
+
 	GetCharacterMovement()->DefaultLandMovementMode = MOVE_Walking;
 	GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 360.f, 0.f);
+	GetCharacterMovement()->GravityScale = 1.f;
+	GetCharacterMovement()->bConstrainToPlane = false;
+	GetCharacterMovement()->bRunPhysicsWithNoController = true;
 
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
@@ -28,7 +34,11 @@ void AEnemyBase::BeginPlay()
 	CurrentHealth = MaxHealth;
 	bIsDefeated = false;
 	bIsAttacking = false;
+
 	GetCharacterMovement()->MaxWalkSpeed = MoveSpeed;
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	GetCharacterMovement()->bRunPhysicsWithNoController = true;
+
 	OnHealthChanged.Broadcast(CurrentHealth, MaxHealth);
 }
 
