@@ -3,6 +3,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "DrawDebugHelpers.h"
 #include "TimerManager.h"
+#include "EnemyBase.h"
 
 ADefenderBase::ADefenderBase()
 {
@@ -47,13 +48,17 @@ void ADefenderBase::ScanAndAttack()
 		return;
 	}
 
-	ADummyEnemyTarget* Target = FindNearestTarget();
+	AActor* Target = FindNearestTarget();
 	if (!Target)
 	{
 		return;
 	}
 
-	Target->ApplyDamage(AttackDamage);
+	AEnemyBase* Enemy = Cast<AEnemyBase>(Target);
+	if (Enemy)
+	{
+		Enemy->TakeDamageFromDefender(AttackDamage);
+	}
 
 	UWorld* World = GetWorld();
 	if (World)
@@ -64,27 +69,27 @@ void ADefenderBase::ScanAndAttack()
 	UE_LOG(LogTemp, Log, TEXT("Defender %s attacked %s for %.1f damage"), *GetName(), *Target->GetName(), AttackDamage);
 }
 
-ADummyEnemyTarget* ADefenderBase::FindNearestTarget() const
+AActor* ADefenderBase::FindNearestTarget() const
 {
-	TArray<AActor*> FoundTargets;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ADummyEnemyTarget::StaticClass(), FoundTargets);
+	TArray<AActor*> FoundEnemies;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AEnemyBase::StaticClass(), FoundEnemies);
 
-	ADummyEnemyTarget* Nearest = nullptr;
+	AActor* Nearest = nullptr;
 	float NearestDistSq = FMath::Square(AttackRange);
 
-	for (AActor* Actor : FoundTargets)
+	for (AActor* Actor : FoundEnemies)
 	{
-		ADummyEnemyTarget* Candidate = Cast<ADummyEnemyTarget>(Actor);
-		if (!Candidate || Candidate->IsDestroyed())
+		AEnemyBase* Enemy = Cast<AEnemyBase>(Actor);
+		if (!Enemy || Enemy->IsDefeated())
 		{
 			continue;
 		}
 
-		const float DistSq = FVector::DistSquared(GetActorLocation(), Candidate->GetActorLocation());
+		const float DistSq = FVector::DistSquared(GetActorLocation(), Enemy->GetActorLocation());
 		if (DistSq <= NearestDistSq)
 		{
 			NearestDistSq = DistSq;
-			Nearest = Candidate;
+			Nearest = Enemy;
 		}
 	}
 

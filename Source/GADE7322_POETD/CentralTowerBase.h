@@ -17,6 +17,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -27,6 +28,15 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Health")
 	float CurrentHealth;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat", meta = (ClampMin = "0.0"))
+	float AttackRange = 800.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat", meta = (ClampMin = "0.0"))
+	float AttackDamage = 20.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat", meta = (ClampMin = "0.05"))
+	float AttackInterval = 1.f;
 
 	UPROPERTY(BlueprintAssignable, Category = "Health")
 	FOnCentralTowerHealthChanged OnHealthChanged;
@@ -45,4 +55,8 @@ public:
 
 private:
 	bool bIsDestroyed = false;
+	FTimerHandle AttackTimerHandle;
+
+	void ScanAndAttack();
+	AActor* FindNearestEnemy() const;
 };
