@@ -5,6 +5,7 @@
 #include "TimerManager.h"
 #include "DefenderBase.h"
 #include "CentralTowerBase.h"
+#include "TDGameState.h"
 
 AEnemyBase::AEnemyBase()
 {
@@ -231,8 +232,18 @@ void AEnemyBase::HandleDeath()
 	bIsDefeated = true;
 	GetWorldTimerManager().ClearTimer(AttackTimerHandle);
 
-	UE_LOG(LogTemp, Log, TEXT("EnemyBase %s destroyed. Reward granted: %d gold. (Economy system not yet connected.)"),
-		*GetName(), RewardOnDeath);
+	ATDGameState* GS = GetWorld() ? GetWorld()->GetGameState<ATDGameState>() : nullptr;
+	if (GS)
+	{
+		GS->AddMoney(RewardOnDeath);
+		UE_LOG(LogTemp, Log, TEXT("EnemyBase %s destroyed. %d gold granted via TDGameState. Total: %d"),
+			*GetName(), RewardOnDeath, GS->GetCurrentMoney());
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("EnemyBase %s destroyed. Reward: %d gold. (TDGameState not found - running without economy.)"),
+			*GetName(), RewardOnDeath);
+	}
 
 	OnEnemyDestroyed.Broadcast(RewardOnDeath);
 	SetLifeSpan(0.1f);
