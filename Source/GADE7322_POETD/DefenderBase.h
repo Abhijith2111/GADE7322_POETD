@@ -2,7 +2,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "DummyEnemyTarget.h"
 #include "DefenderBase.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnDefenderHealthChanged, float, NewHealth, float, InMaxHealth);
@@ -59,5 +58,5 @@ private:
 	FTimerHandle AttackTimerHandle;
 
 	void ScanAndAttack();
-	ADummyEnemyTarget* FindNearestTarget() const;
+	AActor* FindNearestTarget() const;
 };
